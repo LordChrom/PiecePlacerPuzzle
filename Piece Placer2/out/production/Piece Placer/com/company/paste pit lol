@@ -1,0 +1,61 @@
+public static Permutation[][] computePlacementOptions(){
+        int checks=0;
+        int pairs=0;
+
+        Permutation[][] ret = new Permutation[typeCount][];
+        ArrayList<Placement>[][][] sets = new ArrayList[typeCount][][];
+        byte[][] heights = new byte[typeCount][];
+        byte[][] widths  = new byte[typeCount][];
+
+        for (byte type = 0; type < typeCount; type++) {
+            long[] permutations = permutePiece(pieceTypes[type]);
+            ret[type] = new Permutation[permutations.length];
+            heights[type] = new byte[permutations.length];
+            widths[type]  = new byte[permutations.length];
+            sets[type] = new ArrayList[permutations.length][];
+            for (int i = 0; i < permutations.length; i++) {
+                ret[type][i] = new Permutation(permutations[i],type);
+                heights[type][i] = (byte)height(permutations[i]);
+                widths[type][i]  = (byte)width(permutations[i]);
+                sets[type][i] = new ArrayList[typeCount];
+                for (int subType = 0; subType < typeCount; subType++) {
+                    sets[type][i][subType] = new ArrayList<>();
+                }
+            }
+        }
+
+        for (byte aType = 0; aType < typeCount-1; aType++) {
+            for (byte bType = (byte)(aType+1); bType < typeCount; bType++) {
+                Permutation[] aList = ret[aType];
+                Permutation[] bList = ret[bType];
+                for (int ai = 0; ai < aList.length; ai++) {
+                    for (int bi = 0; bi < bList.length; bi++) {
+                        long a = aList[ai].sample.piece;
+                        long b = bList[bi].sample.piece;
+                        for (byte y = (byte)-heights[bType][bi]; y <= heights[aType][ai]; y++) {
+                            for (byte x = (byte)-widths[bType][bi]; x <= widths[aType][ai]; x++) {
+                                if(goodRelation( a,b,x,y)){
+                                    pairs++;
+                                    sets[aType][ai][bType].add(new Placement(bType,x,y,b,bList[bi],widths[bType][bi],heights[bType][bi]));
+                                    sets[bType][bi][aType].add(new Placement(aType,(byte)-x,(byte)-y,a,aList[ai],widths[aType][ai],heights[aType][ai]));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        for (int type = 0; type < typeCount; type++) {
+            for (int i = 0; i < ret[type].length; i++) {
+                Permutation p = ret[type][i];
+                p.amicablePlacements = new Placement[typeCount][];
+                for (int subType = 0; subType < typeCount; subType++) {
+                    ArrayList<Placement> list = sets[type][i][subType];
+                    p.amicablePlacements[subType] = list.toArray(new Placement[0]);
+                }
+            }
+        }
+        System.out.println(pairs+"pairs");
+        return ret;
+}
